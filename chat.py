@@ -7,21 +7,8 @@ import json
 from typing import List, Dict, Any, Optional, Union, Callable
 import time
 from openai import OpenAI
+from config import SYSTEM_PROMPT
 
-
-
-system_prompt = '''
-You are 'm5', a helpful AI Assistant that controls the devices in a house. Complete the following task as instructed or answer the following question with the information provided only.
-
-Services:
-light.turn_off(), light.turn_on(rgb_color,brightness),
-cover.open(), cover.close()
-
-Devices:
-light.livingroom 'Livingroom Light' = on;80%
-light.bedroom 'Bedroom Light' = off
-cover.cover 'Living Room Curtain' = closed
-'''
 
 
 
@@ -31,7 +18,7 @@ class ChatBot:
         api_key: str = None, 
         base_url: str = "https://api.openai.com/v1", 
         model: str = "gpt-3.5-turbo",
-        system_message: str = "You are a helpful assistant."
+        system_message: str = SYSTEM_PROMPT
     ):
         """
         初始化ChatBot类
@@ -177,7 +164,7 @@ def main():
         api_key="sk-",
         base_url="http://192.168.20.104:8000/v1",  # 可以替换为其他兼容OpenAI API的服务地址
         model="qwen2.5-1.5B-p1024-ha-ax650",  # 替换为你的推理接入点ID
-        system_message=system_prompt
+        system_message=SYSTEM_PROMPT
     )
     
     print("欢迎使用AI聊天机器人! 输入'exit'退出。")

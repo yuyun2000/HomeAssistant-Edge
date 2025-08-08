@@ -9,6 +9,7 @@ import requests
 import queue
 from chat import ChatBot, system_prompt
 from ha_control import control_light, control_curtain
+from config import ASR_API_URL
 
 class AudioRecorder:
     def __init__(self):
@@ -114,16 +115,15 @@ class HomeAssistantController:
             
     def recognize_speech(self, filename):
         """Send audio to ASR API and return recognized text"""
-        url = "http://192.168.20.104:8001/recognize"
         try:
             with open(filename, "rb") as f:
                 files = {"audio": (filename, f, "audio/wav")}
-                response = requests.post(url, files=files)
+                response = requests.post(ASR_API_URL, files=files, timeout=10)
                 response.raise_for_status()
                 result = response.json()
                 return result.get('text', '')
         except Exception as e:
-            print(f"ASR error: {str(e)}")
+            print(f"[ASR ERROR] {str(e)}")
             return None
     
     def on_press(self, event):
@@ -182,9 +182,11 @@ class HomeAssistantController:
             self.recorder.p.terminate()
 
 if __name__ == "__main__":
+    from config import LLM_API_KEY, LLM_BASE_URL, LLM_MODEL
+
     controller = HomeAssistantController(
-        api_key="sk-",
-        base_url="http://192.168.20.104:8000/v1",
-        model="qwen2.5-1.5B-p1024-ha-ax650"
+        api_key=LLM_API_KEY,
+        base_url=LLM_BASE_URL,
+        model=LLM_MODEL
     )
     controller.run()

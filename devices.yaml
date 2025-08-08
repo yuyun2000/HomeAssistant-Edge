@@ -1,0 +1,18 @@
+services:
+  - name: light.turn_on
+    params: ["rgb_color", "brightness"]
+  - name: light.turn_off
+  - name: cover.open
+  - name: cover.close
+
+devices:
+  - id: light.livingroom
+    name: "Livingroom Light"
+    state: "on"
+    brightness: 80
+  - id: light.bedroom
+    name: "Bedroom Light"
+    state: "off"
+  - id: cover.cover
+    name: "Living Room Curtain"
+    state: "closed"
