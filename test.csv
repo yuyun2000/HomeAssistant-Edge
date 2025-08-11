@@ -1,40 +1,65 @@
-用例ID,模块,测试标题,前置条件,测试步骤,预期结果,备注
-L-01,灯光,开启灯光,灯光处于off状态,"1. 语音输入 'Turn on the living room light'",灯光开启，LLM 生成light.turn_on命令且target_device=light.livingroom,
-L-02,灯光,关闭灯光,灯光处于on状态,"1. 语音输入 'Turn off the bedroom light'",灯光关闭，生成light.turn_off, 
-L-03,灯光,切换灯光状态,任意状态,"1. 语音输入 'Toggle the living room light'",灯光状态取反，生成light.toggle,
-L-04,灯光,调整亮度,灯光支持brightness,"1. 语音输入 'Set the living room light to 50 percent brightness'",亮度调整为50%，生成light.turn_on并带brightness=50,
-L-05,灯光,更换颜色,灯光支持rgb_color,"1. 语音输入 'Change the living room light to blue'",颜色变为蓝色，生成light.turn_on并带rgb_color=[0,0,255],
-B-01,窗帘,打开窗帘,窗帘处于closed状态,"1. 语音输入 'Open the living room curtain'",窗帘开启，生成cover.open或blinds.open_cover,
-B-02,窗帘,关闭窗帘,窗帘处于open状态,"1. 语音输入 'Close the living room curtain'",窗帘关闭,
-B-03,窗帘,停止窗帘动作,窗帘正在运动,"1. 语音输入 'Stop the living room curtain'",窗帘停止运动,
-B-04,窗帘,切换窗帘状态,可切换状态,"1. 语音输入 'Toggle the living room curtain'",状态取反执行,
-F-01,风扇,开启风扇,风扇处于off状态,"1. 语音输入 'Turn on the bedroom fan'",风扇开启，生成fan.turn_on,
-F-02,风扇,关闭风扇,风扇处于on状态,"1. 语音输入 'Turn off the bedroom fan'",风扇关闭,
-F-03,风扇,切换风扇状态,任意状态,"1. 语音输入 'Toggle the bedroom fan'",状态取反,
-F-04,风扇,增加风扇转速,支持调速,"1. 语音输入 'Increase the bedroom fan speed'",生成fan.increase_speed,
-F-05,风扇,降低风扇转速,支持调速,"1. 语音输入 'Decrease the bedroom fan speed'",生成fan.decrease_speed,
-G-01,车库门,打开车库门,关闭状态,"1. 语音输入 'Open the garage door'",生成garage_door.open_cover,
-G-02,车库门,关闭车库门,开启状态,"1. 语音输入 'Close the garage door'",生成garage_door.close_cover,
-G-03,车库门,停止车库门动作,正在移动,"1. 语音输入 'Stop the garage door'",生成garage_door.stop_cover,
-G-04,车库门,切换车库门状态,任意状态,"1. 语音输入 'Toggle the garage door'",状态取反执行,
-C-01,空调,设置温度(摄氏),支持temperature参数,"1. 语音输入 'Set the AC to 22 degrees Celsius'",生成climate.set_temperature并带temp_c=22,
-C-02,空调,设置温度(华氏),支持temperature参数,"1. 语音输入 'Set the AC to 72 degrees Fahrenheit'",生成climate.set_temperature并带temp_f=72,
-C-03,空调,设置湿度,支持humidity参数,"1. 语音输入 'Set humidity to 45 percent'",生成climate.set_humidity并带humidity=45,
-C-04,空调,设置运转模式,支持hvac_mode参数,"1. 语音输入 'Set AC to cooling mode'",生成climate.set_hvac_mode并带hvac_mode=cool,
-C-05,空调,设置风速模式,支持fan_mode参数,"1. 语音输入 'Set AC fan to high'",生成climate.set_fan_mode并带fan_mode=high,
-LK-01,门锁,锁门,门锁处于解锁状态,"1. 语音输入 'Lock the front door'",生成lock.lock,
-LK-02,门锁,解锁,门锁处于锁定状态,"1. 语音输入 'Unlock the front door'",生成lock.unlock,
-M-01,媒体播放器,打开播放器,播放器处于关闭状态,"1. 语音输入 'Turn on the TV'",生成media_player.turn_on,
-M-02,媒体播放器,关闭播放器,播放器处于打开状态,"1. 语音输入 'Turn off the TV'",生成media_player.turn_off,
-M-03,媒体播放器,切换播放状态,播放或暂停中,"1. 语音输入 'Toggle the media player'",生成media_player.toggle,
-M-04,媒体播放器,音量增加,支持音量控制,"1. 语音输入 'Increase the TV volume'",生成media_player.volume_up,
-M-05,媒体播放器,音量降低,支持音量控制,"1. 语音输入 'Decrease the TV volume'",生成media_player.volume_down,
-M-06,媒体播放器,静音,支持静音,"1. 语音输入 'Mute the TV'",生成media_player.volume_mute,
-M-07,媒体播放器,播放,已加载媒体内容,"1. 语音输入 'Play the TV'",生成media_player.media_play,
-M-08,媒体播放器,暂停,播放中,"1. 语音输入 'Pause the TV'",生成media_player.media_pause,
-M-09,媒体播放器,停止,播放中,"1. 语音输入 'Stop the TV'",生成media_player.media_stop,
-M-10,媒体播放器,下一曲,播放列表存在下一曲,"1. 语音输入 'Next track on TV'",生成media_player.media_next_track,
-M-11,媒体播放器,上一曲,播放列表存在上一曲,"1. 语音输入 'Previous track on TV'",生成media_player.media_previous_track,
-S-01,开关,开启开关,关闭状态,"1. 语音输入 'Turn on the coffee machine'",生成switch.turn_on,
-S-02,开关,关闭开关,开启状态,"1. 语音输入 'Turn off the coffee machine'",生成switch.turn_off,
-S-03,开关,切换开关状态,任意状态,"1. 语音输入 'Toggle the coffee machine'",生成switch.toggle,
+id,category,voice_command,expected_service,target_device,expected_params,llm_expected_reply,llm_reply,result
+L-01,light,Turn on the living room light,light.turn_on,light.livingroom,,"Sure, turning on the Livingroom Light.","certainly, turning on Livingroom now
+```homeassistant
+{""service"": ""light.turn_on"", ""target_device"": ""light.livingroom""}
+```",��
+L-02,light,Turn off the bedroom light,light.turn_off,light.bedroom,,"Okay, turning off the Bedroom Light.","sure, turning off Bedroom
+```homeassistant
+{""service"": ""light.turn_off"", ""target_device"": ""light.bedroom""}
+```",��
+L-03,light,Set the living room light to 50 percent brightness,light.turn_on,light.livingroom,brightness=50,Dimming the Livingroom Light to 50% brightness.,"setting the brightness of living room to 50%.
+```homeassistant
+{""service"": ""light.turn_on"", ""target_device"": ""light.livingroom"", ""brightness"": 0.5}
+```",��
+L-04,light,Change the living room light to blue,light.turn_on,light.livingroom,"rgb_color=[0,0,255]",Changing the Livingroom Light to blue.,"turning living room to blue.
+```homeassistant
+{""service"": ""light.turn_on"", ""target_device"": ""light.livingroom"", ""color"": ""(0, 0, 255)""}
+```",��
+B-01,cover,Open the living room curtain,cover.open_cover,cover.livingroom_curtain,,Opening the Living Room Curtain.,"opening living room curtain now
+```homeassistant
+{""service"": ""cover.open_cover"", ""target_device"": ""cover.livingroom_curtain""}
+``",��
+B-02,cover,Close the living room curtain,cover.close_cover,cover.livingroom_curtain,,Closing the Living Room Curtain.,"closing living room curtain for you
+```homeassistant
+{""service"": ""cover.close_cover"", ""target_device"": ""cover.livingroom_curtain""}
+```",��
+F-01,fan,Turn on the bedroom fan,fan.turn_on,fan.bedroom_fan,,Turning on the Bedroom Fan.,"turning on the fan for you.
+```homeassistant
+{""service"": ""fan.turn_on"", ""target_device"": ""fan.bedroom_fan}
+```",��
+F-02,fan,Increase the bedroom fan speed,fan.increase_speed,fan.bedroom_fan,,Increasing the speed of the Bedroom Fan.,"increasing speed of Bedroom Fan
+```homeassistant
+{""service"": ""fan.increase_speed"", ""target_device"": ""fan.bedroom_fan""}
+```",��
+C-01,climate,Set the AC to 22 degrees Celsius,climate.set_temperature,climate.livingroom_ac,temperature=22,Setting the Living Room AC to 22 degrees Celsius.,"setting the room to 22 degrees celsius for cooler temperature.
+```homeassistant
+{""service"": ""climate.set_temperature"", ""target_device"": ""climate.livingroom_ac"", ""temperature"": 22}
+```",��
+C-02,climate,Set AC fan to high,climate.set_fan_mode,climate.livingroom_ac,fan_mode=high,Setting the fan of Living Room AC to high.,"changing AC fan to high setting.
+```homeassistant
+{""service"": ""climate.set_fan_mode"", ""target_device"": ""climate.livingroom_ac"", ""fan_mode"": ""High""}
+```",��
+LK-01,lock,Lock the front door,lock.lock,lock.front_door,,Locking the Front Door.,"securing Front Door
+```homeassistant
+{""service"": ""lock.lock"", ""target_device"": ""lock.front_door""}
+```",��
+LK-02,lock,Unlock the front door,lock.unlock,lock.front_door,,Unlocking the Front Door.,"unlocking Front Door
+```homeassistant
+{""service"": ""lock.unlock"", ""target_device"": ""lock.front_door""}
+```",��
+M-01,media_player,Play music on the living room speaker,media_player.media_play,media_player.livingroom_speaker,,Starting playback on Living Room Speaker.," playing media on Livingroom Speaker.
+```notion
+{""service"":"":media_player.media_play"", ""target_device"": ""media_player.livingroom_speaker""}
+```",��
+M-02,media_player,Pause the music on the living room speaker,media_player.media_pause,media_player.livingroom_speaker,,Pausing the Living Room Speaker.,"i'll pause the media for you.
+```homeassistant
+{""service"": ""media_player.media_pause"", ""target_device"": ""media_player.livingroom_speaker""}
+```",��
+S-01,switch,Turn on the coffee machine,switch.turn_on,switch.coffee_machine,,Turning on the Coffee Machine.,"turning on the switch for you.
+```homeassistant
+{""service"": ""switch.turn_on"", ""target_device"": ""switch.coffee_machine""}
+```",��
+S-02,switch,Turn off the coffee machine,switch.turn_off,switch.coffee_machine,,Turning off the Coffee Machine.,"turning off coffee machine
+```homeassistant
+{""service"": ""switch.turn_off"", ""target_device"": ""switch.coffee_machine""}
+```",��

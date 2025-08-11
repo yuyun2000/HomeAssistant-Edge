@@ -1,27 +1,44 @@
-services:
-  # 原有的灯光和窗帘
-  - name: light.turn_on
-    params: ["rgb_color", "brightness"]
-  - name: light.turn_off
-  - name: cover.open
-  - name: cover.close
-
-  # 新增空调服务
-  - name: climate.set_temperature
-    params: ["temperature"]
-  - name: climate.set_hvac_mode
-    params: ["hvac_mode"]
-
 devices:
-  # 原有设备
-  - id: light.livingroom
-    name: "Livingroom Light"
-    state: "on"
-    brightness: 80
-
-  # 新增空调
-  - id: climate.livingroom_ac
-    name: "Living Room AC"
-    state: "cool"
-    temperature: 24
-    hvac_mode: "cool"
+- id: light.livingroom
+  name: Livingroom
+  state: 'off'
+- id: light.bedroom
+  name: Bedroom
+  state: 'off'
+- id: cover.livingroom_curtain
+  name: Livingroom Curtain
+  state: 'off'
+- id: fan.bedroom_fan
+  name: Bedroom Fan
+  state: 'off'
+- id: climate.livingroom_ac
+  name: Livingroom Ac
+  state: 'off'
+- id: lock.front_door
+  name: Front Door
+  state: 'off'
+- id: media_player.livingroom_speaker
+  name: Livingroom Speaker
+  state: 'off'
+- id: switch.coffee_machine
+  name: Coffee Machine
+  state: 'off'
+services:
+- name: light.turn_on
+- name: light.turn_off
+- name: cover.open_cover
+- name: cover.close_cover
+- name: fan.turn_on
+- name: fan.increase_speed
+- name: climate.set_temperature
+  params:
+  - temperature
+- name: climate.set_fan_mode
+  params:
+  - fan_mode
+- name: lock.lock
+- name: lock.unlock
+- name: media_player.media_play
+- name: media_player.media_pause
+- name: switch.turn_on
+- name: switch.turn_off

@@ -1,0 +1,17 @@
+id,category,voice_command,expected_service,target_device,expected_params,llm_expected_reply
+L-01,light,Turn on the living room light,light.turn_on,light.livingroom,,"Sure, turning on the Livingroom Light."
+L-02,light,Turn off the bedroom light,light.turn_off,light.bedroom,,"Okay, turning off the Bedroom Light."
+L-03,light,Set the living room light to 50 percent brightness,light.turn_on,light.livingroom,brightness=50,Dimming the Livingroom Light to 50% brightness.
+L-04,light,Change the living room light to blue,light.turn_on,light.livingroom,"rgb_color=[0,0,255]",Changing the Livingroom Light to blue.
+B-01,cover,Open the living room curtain,cover.open_cover,cover.livingroom_curtain,,Opening the Living Room Curtain.
+B-02,cover,Close the living room curtain,cover.close_cover,cover.livingroom_curtain,,Closing the Living Room Curtain.
+F-01,fan,Turn on the bedroom fan,fan.turn_on,fan.bedroom_fan,,Turning on the Bedroom Fan.
+F-02,fan,Increase the bedroom fan speed,fan.increase_speed,fan.bedroom_fan,,Increasing the speed of the Bedroom Fan.
+C-01,climate,Set the AC to 22 degrees Celsius,climate.set_temperature,climate.livingroom_ac,temperature=22,Setting the Living Room AC to 22 degrees Celsius.
+C-02,climate,Set AC fan to high,climate.set_fan_mode,climate.livingroom_ac,fan_mode=high,Setting the fan of Living Room AC to high.
+LK-01,lock,Lock the front door,lock.lock,lock.front_door,,Locking the Front Door.
+LK-02,lock,Unlock the front door,lock.unlock,lock.front_door,,Unlocking the Front Door.
+M-01,media_player,Play music on the living room speaker,media_player.media_play,media_player.livingroom_speaker,,Starting playback on Living Room Speaker.
+M-02,media_player,Pause the music on the living room speaker,media_player.media_pause,media_player.livingroom_speaker,,Pausing the Living Room Speaker.
+S-01,switch,Turn on the coffee machine,switch.turn_on,switch.coffee_machine,,Turning on the Coffee Machine.
+S-02,switch,Turn off the coffee machine,switch.turn_off,switch.coffee_machine,,Turning off the Coffee Machine.

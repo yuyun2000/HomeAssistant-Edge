@@ -163,7 +163,7 @@ def main():
     bot = ChatBot(
         api_key="sk-",
         base_url="http://192.168.20.188:8000/v1",  # 可以替换为其他兼容OpenAI API的服务地址
-        model="qwen2.5-1.5B-p1024-ha-ax650",  # 替换为你的推理接入点ID
+        model="qwen2.5-0.5B-p1024-ha-ax650",  # 替换为你的推理接入点ID
         system_message=SYSTEM_PROMPT
     )
     
