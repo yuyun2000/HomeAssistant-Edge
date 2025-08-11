@@ -1,62 +1,74 @@
-# HomeAssistant Edge
+# 🏠 HomeAssistant Edge
 
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)]()
 [![Platform](https://img.shields.io/badge/platform-AX650-orange)]()
 
-**HomeAssistant Edge** 是一个运行在 **AX650 本地 AI 芯片**上的 Home Assistant 离线语音控制系统。  
-本项目集成了 **离线语音识别 (ASR)** 与 **本地大语言模型 (LLM)**，无需依赖云服务，完全本地推理，保护隐私，低延迟响应。
+**HomeAssistant Edge** 是一个基于 **AX650 本地 AI 芯片** 的 Home Assistant 离线语音控制系统。  
+集成 **离线语音识别 (ASR)** 与 **本地大语言模型 (LLM)**，无需云服务，响应超低延迟并保护隐私。
 
-当前功能特点：
-- 🔌 **完全离线** - ASR 和 LLM 全部运行在 AX650 上
-- 🗣 **语音控制** Home Assistant 中的设备（目前仅测试灯光与窗帘）
-- ⚡ **低延迟** - 本地推理，指令响应快
-- 🌐 **可扩展** - 支持自定义设备，通过修改 `devices.yaml` 适配你的家庭
-- 🔒 **隐私安全** - 不上传任何音频或数据到云端
+---
 
-> 目前仅支持 **英语语音指令**，由于测试设备有限，除灯光与窗帘外其他设备的稳定性尚未验证。
+## ✨ 功能特点
+- 🔌 **完全离线**：ASR 和 LLM 全部运行于 AX650
+- 🗣 **语音控制** Home Assistant 中的各类智能家居设备
+- ⚡ **毫秒级响应**：本地推理，无需等待云端
+- 🌐 **可扩展性强**：通过 `devices.yaml` 快速适配新设备
+- 🔒 **隐私安全**：不上传音频和数据到云端
+
+> ⚠ 当前仅支持 **英语语音指令**  
+> ⚠ 详细支持设备类型见下文
+
+---
+
+## 📋 当前支持设备与服务
+
+| 设备类型 | 可用操作（service） |
+|----------|--------------------|
+| **灯光 (`light`)** | `turn_on`（可调颜色/亮度）、`turn_off`、`toggle` |
+| **窗帘/百叶窗 (`blinds` / `cover`)** | `open_cover`、`close_cover`、`stop_cover`、`toggle` |
+| **风扇 (`fan`)** | `turn_on`、`turn_off`、`toggle`、`increase_speed`、`decrease_speed` |
+| **车库门 (`garage_door`)** | `open_cover`、`close_cover`、`stop_cover`、`toggle` |
+| **恒温/空调 (`climate`)** | `set_temperature`、`set_humidity`、`set_fan_mode`、`set_hvac_mode` |
+| **门锁 (`lock`)** | `lock`、`unlock` |
+| **媒体播放器 (`media_player`)** | `turn_on`、`turn_off`、`toggle`、`volume_up`、`volume_down`、`volume_mute`、`media_play`、`media_pause`、`media_stop`、`media_play_pause`、`media_next_track`、`media_previous_track` |
+| **开关 (`switch`)** | `turn_on`、`turn_off`、`toggle` |
 
 ---
 
 ## 🚀 系统架构
-
 ```mermaid
 flowchart LR
-    MIC[麦克风输入] --> ASR[离线语音识别 - AX650]
-    ASR --> TEXT[识别文本]
-    TEXT --> LLM[离线大语言模型 - AX650]
-    LLM --> CMD[生成 Home Assistant 控制命令]
-    CMD --> HA[Home Assistant API]
-    HA --> DEVICE[智能家居设备]
+    MIC[🎙 麦克风输入] --> ASR[🗣 离线语音识别 - AX650]
+    ASR --> TEXT[📝 识别文本]
+    TEXT --> LLM[🧠 大语言模型 - AX650]
+    LLM --> CMD[🔧 生成 Home Assistant 控制命令]
+    CMD --> HA[🏠 Home Assistant API]
+    HA --> DEVICE[💡 智能家居设备]
 ```
-
-- **ASR**：本地语音识别服务（AX650 芯片推理）
-- **LLM**：本地大语言模型（Qwen / ChatGLM 等可部署在 AX650 上）
-- **HA**：Home Assistant API 调用
-- **控制范围**：目前仅测试灯光 (`light`) 与窗帘 (`cover`)
 
 ---
 
 ## 📦 安装部署
 
-### 1. 克隆仓库
+### 1️⃣ 克隆仓库
 ```bash
 git clone https://github.com/yuyun2000/HomeAssistant-Edge.git
 cd HomeAssistant-Edge
 ```
 
-### 2. 安装依赖
-建议使用 Python 3.9+。
+### 2️⃣ 安装依赖
+建议使用 **Python 3.9+**：
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. 配置 `.env`
-在项目根目录创建 `.env` 文件，例如：
+### 3️⃣ 配置 `.env`
+在项目根目录创建 `.env` 文件：
 ```ini
-# Home Assistant 配置
+# Home Assistant
 HA_BASE_URL=http://192.168.1.100:8123
-HA_TOKEN=your_home_assistant_long_lived_access_token
+HA_TOKEN=your_long_lived_access_token
 
 # 本地 ASR API
 ASR_API_URL=http://192.168.1.101:8001/recognize
@@ -66,13 +78,18 @@ LLM_API_KEY=sk-xxxx
 LLM_BASE_URL=http://192.168.1.101:8000/v1
 LLM_MODEL=qwen2.5-1.5B-p1024-ha-ax650
 ```
-> 📌 **注意**  
-> - `HA_TOKEN` 需在 Home Assistant 用户配置界面生成长期访问令牌。  
-> - 所有服务（ASR/LLM/HA）需在局域网内可访问。  
-> - **ASR & LLM 需部署在 AX650 上**。
 
-### 4. 配置设备列表
-编辑 `devices.yaml`：
+📌 注意：
+- `HA_TOKEN` 在 Home Assistant **用户设置 → 安全** 中生成长期访问令牌。
+- **ASR** / **LLM** / **Home Assistant** 需在局域网内可访问。
+- **ASR 与 LLM 必须运行在 AX650 设备上**。
+
+---
+
+### 4️⃣ 配置设备 (`devices.yaml`)
+`devices.yaml` 决定了 LLM 可以控制哪些设备。
+
+**示例**（默认）：
 ```yaml
 services:
   - name: light.turn_on
@@ -86,41 +103,96 @@ devices:
     name: "Livingroom Light"
     state: "on"
     brightness: 80
-  - id: cover.curtain
+  - id: light.bedroom
+    name: "Bedroom Light"
+    state: "off"
+  - id: cover.cover
     name: "Living Room Curtain"
     state: "closed"
 ```
-此文件定义了 Home Assistant 的可控设备和支持的服务。  
-**修改此文件即可适配不同家庭配置，无需改代码。**
+
+---
+
+## 🛠 添加自定义设备
+
+如果你希望 LLM 能控制更多设备（例如空调、风扇），需要在 `devices.yaml` 增加对应的 **Service** 和 **Device**。
+
+### ① 获取 Home Assistant 设备信息
+- 打开 **开发者工具 → 状态** 查看设备的 **实体 ID**
+- 在 **开发者工具 → 服务** 查看可用的 Service 及参数
+
+---
+
+### ② 编辑 `devices.yaml`
+**示例：添加空调（climate）**
+```yaml
+services:
+  # 原有的灯光和窗帘
+  - name: light.turn_on
+    params: ["rgb_color", "brightness"]
+  - name: light.turn_off
+  - name: cover.open
+  - name: cover.close
+
+  # 新增空调服务
+  - name: climate.set_temperature
+    params: ["temperature"]
+  - name: climate.set_hvac_mode
+    params: ["hvac_mode"]
+
+devices:
+  # 原有设备
+  - id: light.livingroom
+    name: "Livingroom Light"
+    state: "on"
+    brightness: 80
+
+  # 新增空调
+  - id: climate.livingroom_ac
+    name: "Living Room AC"
+    state: "cool"
+    temperature: 24
+    hvac_mode: "cool"
+```
+
+---
+
+### ③ 保存 & 重启
+保存文件后，重启项目：
+```bash
+python main.py
+```
+LLM 会自动加载新的 `devices.yaml`，并以此生成 System Prompt，从而识别/执行新设备的指令。
+
+💡 **小贴士**：
+- `id` 必须是 Home Assistant 实体 ID
+- `params` 对应 Home Assistant 服务的参数名
+- `state`/`brightness`/`temperature` 等是可选属性，但有助于 LLM 理解设备状态
+- 添加不在模型训练范围内的 service 可能无法正确生成调用指令
 
 ---
 
 ## ▶️ 运行
-
-在终端中运行：
 ```bash
 python main.py
 ```
 
-运行后提示：
+运行时会提示：
 ```
 Home Assistant Controller - Press SPACE to start/stop recording
 ```
-- 按 **空格键** 开始录音（再次按空格结束录音）。
-- 程序会将指令发送至本地 ASR 解析为文本，再交给 LLM 生成 Home Assistant 控制命令。
-- 自动调用 Home Assistant API 执行操作。
-- 按 **ESC** 退出程序。
+- **空格键** 开始/结束录音
+- 系统会调用 ASR → 生成文本 → LLM 解析 → 调用 API
+- **ESC** 退出
 
 ---
 
 ## 💡 示例
-
 **语音输入：**
 ```
 Turn on the living room light to blue
 ```
-
-**系统执行：**
+**执行结果：**
 ```
 Assistant: Sure, turning on the living room light to blue.
 Executing: {"service": "light.turn_on", "target_device": "light.livingroom", "rgb_color": [0,0,255]}
@@ -128,38 +200,38 @@ Executing: {"service": "light.turn_on", "target_device": "light.livingroom", "rg
 
 ---
 
-## 📁 文件结构
+## 📁 项目结构
 ```
 HomeAssistant-Edge/
-├── main.py              # 前端交互：录音、ASR调用、LLM调用
+├── main.py              # 入口：录音、ASR调用、LLM调用
 ├── ha_control.py        # 控制 Home Assistant API
-├── chat.py              # LLM 封装，动态加载 devices.yaml 配置
-├── config.py            # 读取 .env + 设备配置
-├── devices.yaml         # 用户可编辑的设备与服务列表
-├── requirements.txt     # 项目依赖
+├── chat.py              # LLM 封装
+├── config.py            # 读取 .env & devices.yaml
+├── devices.yaml         # 用户配置设备和服务
+├── requirements.txt     # Python 依赖
 └── README.md
 ```
 
 ---
 
 ## ⚠️ 注意事项
-- 目前仅支持 **英语语音指令**
-- 仅测试过灯光 (`light`) 和窗帘 (`cover`) ，其他设备未经完整验证。
-- 本项目依赖 Home Assistant 的 REST API，需要开启 API 访问。
-- 录音功能依赖 `pyaudio`，请确保麦克风可用。
+- 当前仅支持 **英语语音指令**
+- 已测试的设备类型见「当前支持设备与服务」
+- 请确保 Home Assistant API 已开启
+- `pyaudio` 录音功能需确保麦克风可用
 
 ---
 
 ## 📜 License
-MIT License - 详见 [LICENSE](LICENSE) 文件。
+MIT License - 详见 [LICENSE](LICENSE)
 
 ---
 
 ## 🤝 贡献
-欢迎提交 **Issue** 或 **Pull Request** 来改进本项目。
+欢迎通过 **Issue** / **Pull Request** 改进本项目
 
 ---
 
-## 📌 作者
+## 👤 作者
 - [yuyun2000](https://github.com/yuyun2000)  
-- 项目仓库：[HomeAssistant Edge](https://github.com/yuyun2000/HomeAssistant-Edge)
+- [🌐 GitHub 项目地址](https://github.com/yuyun2000/HomeAssistant-Edge)

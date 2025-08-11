@@ -1,18 +1,27 @@
 services:
+  # 原有的灯光和窗帘
   - name: light.turn_on
     params: ["rgb_color", "brightness"]
   - name: light.turn_off
   - name: cover.open
   - name: cover.close
 
+  # 新增空调服务
+  - name: climate.set_temperature
+    params: ["temperature"]
+  - name: climate.set_hvac_mode
+    params: ["hvac_mode"]
+
 devices:
+  # 原有设备
   - id: light.livingroom
     name: "Livingroom Light"
     state: "on"
     brightness: 80
-  - id: light.bedroom
-    name: "Bedroom Light"
-    state: "off"
-  - id: cover.cover
-    name: "Living Room Curtain"
-    state: "closed"
+
+  # 新增空调
+  - id: climate.livingroom_ac
+    name: "Living Room AC"
+    state: "cool"
+    temperature: 24
+    hvac_mode: "cool"

@@ -1,8 +1,6 @@
 import requests
-
+from config import HA_BASE_URL, HA_TOKEN
 # 本地配置：请根据实际情况修改
-BASE_URL = "http://100.66.1.2:8123"
-TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI4MjMyOTg3NWU2YWU0MDhkYWY5YWI3ODQ4MDM1ZjA1NyIsImlhdCI6MTc0Nzc5MjM3MywiZXhwIjoyMDYzMTUyMzczfQ.GG4-7nXElkAHaXX5kdObMAGD3rLod81KJJ3-Rd-A5cw"
 
 def call_service(domain, service, data):
     """
@@ -12,9 +10,9 @@ def call_service(domain, service, data):
     :param data: 需要提交的数据（dict）
     :return: 返回 JSON 数据（dict），如出错返回 None
     """
-    url = f"{BASE_URL.rstrip('/')}/api/services/{domain}/{service}"
+    url = f"{HA_BASE_URL.rstrip('/')}/api/services/{domain}/{service}"
     headers = {
-        "Authorization": f"Bearer {TOKEN}",
+        "Authorization": f"Bearer {HA_TOKEN}",
         "Content-Type": "application/json"
     }
     try:
@@ -31,9 +29,9 @@ def get_state(entity_id):
     :param entity_id: 实体ID
     :return: 状态字典，出错返回None
     """
-    url = f"{BASE_URL.rstrip('/')}/api/states/{entity_id}"
+    url = f"{HA_BASE_URL.rstrip('/')}/api/states/{entity_id}"
     headers = {
-        "Authorization": f"Bearer {TOKEN}",
+        "Authorization": f"Bearer {HA_TOKEN}",
         "Content-Type": "application/json"
     }
     try:
