@@ -1,15 +1,20 @@
 import json
 import re
-import keyboard
 import threading
 import time
 import wave
 import pyaudio
 import requests
 import queue
-from chat import ChatBot, system_prompt
+import numpy as np
+import sounddevice as sd
+from chat import ChatBot
 from ha_control import control_light, control_curtain
-from config import ASR_API_URL
+from config import ASR_API_URL, SYSTEM_PROMPT
+
+# 导入KWS和VAD模块
+from kws import KeywordSpotter
+from vad import SileroVAD
 
 class AudioRecorder:
     def __init__(self):
@@ -71,11 +76,26 @@ class HomeAssistantController:
             api_key=api_key,
             base_url=base_url,
             model=model,
-            system_message=system_prompt
+            system_message=SYSTEM_PROMPT
         )
+        print("sys prompt:",SYSTEM_PROMPT)
         self.recorder = AudioRecorder()
-        self.recording_started = False
         self.queue = queue.Queue()
+        
+        # 初始化KWS和VAD
+        try:
+            self.kws = KeywordSpotter()
+            print("Keyword spotter initialized successfully!")
+        except Exception as e:
+            print(f"Failed to initialize keyword spotter: {e}")
+            self.kws = None
+            
+        try:
+            self.vad = SileroVAD("silero-vad.onnx", buffer_size=5, silence_threshold=0.3)
+            print("VAD initialized successfully!")
+        except Exception as e:
+            print(f"Failed to initialize VAD: {e}")
+            self.vad = None
     
     def parse_response(self, response: str) -> dict:
         """Extract homeassistant command from LLM response"""
@@ -126,63 +146,108 @@ class HomeAssistantController:
             print(f"[ASR ERROR] {str(e)}")
             return None
     
-    def on_press(self, event):
-        """Toggle recording with space key press"""
-        if event.name == 'space':
-            if not self.recording_started:
-                # Start recording
-                self.recording_started = True
-                self.recorder.start_recording()
-            else:
-                # Stop recording
-                self.recording_started = False
-                filename = self.recorder.stop_recording()
-                if filename:
-                    text = self.recognize_speech(filename)
-                    if text:
-                        print(f"\nYou said: {text}")
-                        self.queue.put(text)
+    def process_voice_command(self):
+        """Process voice command using KWS and VAD"""
+        if not self.kws or not self.vad:
+            print("KWS or VAD not initialized, cannot process voice command")
+            return
+            
+        print("Listening for wake word...")
+        
+        # 音频参数
+        sample_rate = 16000
+        kws_samples_per_read = int(0.1 * sample_rate)  # 0.1 second = 100 ms
+        vad_samples_per_read = 512  # VAD窗口大小
+        
+        # 打开音频输入流
+        with sd.InputStream(channels=1, dtype="float32", samplerate=sample_rate) as stream:
+            while True:
+                # 读取音频数据用于KWS
+                samples, _ = stream.read(kws_samples_per_read)
+                samples = samples.reshape(-1)
+                
+                # 处理音频数据，检测关键词
+                keyword = self.kws.process_audio(samples)
+                
+                # 如果检测到关键词
+                if keyword:
+                    print(f"Detected wake word: {keyword}")
+                    print("Listening for voice command...")
+                    
+                    # 开始录音
+                    self.recorder.start_recording()
+                    
+                    # 使用VAD检测语音活动
+                    silence_count = 0
+                    # 唤醒后等待用户说话的最大静默计数（约10秒）
+                    initial_max_silence_count = 320
+                    # 用户说话过程中的静默计数阈值（约1.6秒）
+                    speaking_max_silence_count = 50
+                    max_silence_count = initial_max_silence_count  # 初始使用较长的静默容忍时间
+                    speaking_detected = False  # 标记是否检测到用户说话
+                    
+                    # 重置VAD缓冲区
+                    if hasattr(self.vad, 'prob_buffer'):
+                        self.vad.prob_buffer.clear()
+                    
+                    while True:
+                        # 读取音频数据用于VAD
+                        audio_samples, _ = stream.read(vad_samples_per_read)
+                        audio_samples = audio_samples.flatten()
+                        
+                        # 检查是否在说话
+                        is_speaking = self.vad(audio_samples)
+                        
+                        if not is_speaking:
+                            silence_count += 1
+                            if silence_count > max_silence_count:
+                                # 停止录音
+                                filename = self.recorder.stop_recording()
+                                if filename:
+                                    text = self.recognize_speech(filename)
+                                    if text:
+                                        print(f"\nYou said: {text}")
+                                        # 处理识别到的文本
+                                        content = self.bot.chat(text)
+                                        print(f"\nAssistant: {content}")
+                                        
+                                        # 解析并执行命令
+                                        command = self.parse_response(content)
+                                        if command:
+                                            print(f"Executing: {command}")
+                                            # self.execute_command(command)
+                                break
+                        else:
+                            # 检测到说话
+                            silence_count = 0  # 重置静默计数
+                            if not speaking_detected:
+                                # 首次检测到说话，切换到较短的静默容忍时间
+                                speaking_detected = True
+                                max_silence_count = speaking_max_silence_count
+                    
+                    # 重置KWS流
+                    self.kws.reset()
+                    print("Listening for wake word...")
     
     def run(self):
         """Main interactive loop with speech recognition"""
-        print("Home Assistant Controller - Press SPACE to start/stop recording")
-        keyboard.on_press(self.on_press)
+        print("Home Assistant Controller - Listening for wake word (Press Ctrl+C to exit)")
         
         try:
-            while True:
-                if keyboard.is_pressed('esc'):
-                    print("Goodbye!")
-                    break
-                
-                try:
-                    # Get recognized text from queue
-                    text = self.queue.get(timeout=0.1)
-                    if text.lower() in ['exit', 'quit']:
-                        print("Goodbye!")
-                        break
-                    
-                    # Get LLM response
-                    content = self.bot.chat(text)
-                    print(f"\nAssistant: {content}")
-                    
-                    # Parse and execute command
-                    command = self.parse_response(content)
-                    if command:
-                        print(f"Executing: {command}")
-                        self.execute_command(command)
-                
-                except queue.Empty:
-                    # No new speech recognized, continue
-                    pass
+            # 启动语音命令处理
+            self.process_voice_command()
+        except KeyboardInterrupt:
+            print("\nCaught Ctrl + C. Exiting")
         finally:
-            keyboard.unhook_all()
             # Clean up audio resources
             if self.recorder.recording:
                 self.recorder.stop_recording()
             self.recorder.p.terminate()
+            if self.kws:
+                self.kws.close()
 
 if __name__ == "__main__":
-    from config import LLM_API_KEY, LLM_BASE_URL, LLM_MODEL
+    from config import LLM_API_KEY, LLM_BASE_URL, LLM_MODEL, SYSTEM_PROMPT
 
     controller = HomeAssistantController(
         api_key=LLM_API_KEY,

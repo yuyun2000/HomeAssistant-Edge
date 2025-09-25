@@ -1,6 +1,5 @@
 import requests
 from config import HA_BASE_URL, HA_TOKEN
-# 本地配置：请根据实际情况修改
 
 def call_service(domain, service, data):
     """
@@ -42,14 +41,8 @@ def get_state(entity_id):
         print(f"查询状态出错: {e}")
         return None
 
+# ------------------------ Light ------------------------
 def control_light(entity_id, action, **kwargs):
-    """
-    统一灯光控制接口，外部只需调用此函数。
-    :param entity_id: 灯光实体ID，如 'light.test_light'
-    :param action: 操作类型，'on'开灯，'off'关灯，'state'查状态，'color'设颜色
-    :param kwargs: 额外参数，如 color_name, rgb_color, brightness
-    :return: 操作结果或状态
-    """
     if action == "on":
         data = {"entity_id": entity_id}
         if "brightness" in kwargs:
@@ -93,14 +86,8 @@ def control_light(entity_id, action, **kwargs):
         print("不支持的操作类型。action应为'on', 'off', 'state', 'color'")
         return None
 
+# ------------------------ Cover ------------------------
 def control_curtain(entity_id, action, position=None):
-    """
-    统一窗帘控制接口，外部只需调用此函数。
-    :param entity_id: 窗帘实体ID，如 'cover.test_curtain'
-    :param action: 操作类型，'open'全开，'close'全关，'position'指定角度（0-100）
-    :param position: 角度百分比（0-100），仅在action='position'时生效
-    :return: 操作结果或状态
-    """
     if action == "open":
         data = {"entity_id": entity_id}
         return call_service("cover", "open_cover", data)
@@ -131,13 +118,196 @@ def control_curtain(entity_id, action, position=None):
         print("不支持的操作类型。action应为'open', 'close', 'position', 'state'")
         return None
 
-# 用法示例（外部import后只需调用control_light/control_curtain）：
-# from light_api import control_light, control_curtain
-# control_light("light.test_light", "on")
-# control_light("light.test_light", "off")
-# state = control_light("light.test_light", "state")
-# control_light("light.test_light", "color", color_name="blue")
-# control_curtain("cover.test_curtain", "open")
-# control_curtain("cover.test_curtain", "close")
-# control_curtain("cover.test_curtain", "position", position=50)
-# state = control_curtain("cover.test_curtain", "state")
+# ------------------------ Fan ------------------------
+def control_fan(entity_id, action):
+    if action == "on":
+        data = {"entity_id": entity_id}
+        return call_service("fan", "turn_on", data)
+    elif action == "off":
+        data = {"entity_id": entity_id}
+        return call_service("fan", "turn_off", data)
+    elif action == "increase_speed":
+        data = {"entity_id": entity_id}
+        return call_service("fan", "increase_speed", data)
+    elif action == "decrease_speed":
+        data = {"entity_id": entity_id}
+        return call_service("fan", "decrease_speed", data)
+    elif action == "state":
+        state = get_state(entity_id)
+        if not state or "attributes" not in state:
+            return "未能获取到风扇的状态信息。"
+        attr = state["attributes"]
+        name = attr.get("friendly_name", entity_id)
+        onoff = "开启" if state.get("state") == "on" else "关闭"
+        percentage = attr.get("percentage")
+        preset_mode = attr.get("preset_mode")
+        available = "是" if attr.get("available", True) else "否"
+        msg = f'风扇“{name}”当前状态为：{onoff}。'
+        if percentage is not None:
+            msg += f"\n- 百分比速度：{percentage}%"
+        if preset_mode:
+            msg += f"\n- 预设模式：{preset_mode}"
+        msg += f"\n- 设备可用：{available}"
+        return msg
+    else:
+        print("不支持的操作类型。action应为'on', 'off', 'increase_speed','decrease_speed', 'state'")
+        return None
+
+# ------------------------ Climate ------------------------
+def control_climate(entity_id, action, **kwargs):
+    if action == "set_temperature":
+        if "temperature" not in kwargs:
+            print("缺少temperature参数")
+            return None
+        data = {"entity_id": entity_id, "temperature": kwargs["temperature"]}
+        return call_service("climate", "set_temperature", data)
+    elif action == "set_fan_mode":
+        if "fan_mode" not in kwargs:
+            print("缺少fan_mode参数")
+            return None
+        data = {"entity_id": entity_id, "fan_mode": kwargs["fan_mode"]}
+        return call_service("climate", "set_fan_mode", data)
+    elif action == "state":
+        state = get_state(entity_id)
+        if not state or "attributes" not in state:
+            return "未能获取到空调的状态信息。"
+        attr = state["attributes"]
+        name = attr.get("friendly_name", entity_id)
+        hvac_action = attr.get("hvac_action", "unknown")
+        temperature = attr.get("temperature")
+        current_temp = attr.get("current_temperature")
+        fan_mode = attr.get("fan_mode")
+        available = "是" if attr.get("available", True) else "否"
+        msg = f'空调“{name}”当前状态为：{hvac_action}。'
+        if temperature is not None:
+            msg += f"\n- 设置温度：{temperature}℃"
+        if current_temp is not None:
+            msg += f"\n- 当前室温：{current_temp}℃"
+        if fan_mode:
+            msg += f"\n- 风扇模式：{fan_mode}"
+        msg += f"\n- 设备可用：{available}"
+        return msg
+    else:
+        print("不支持的操作类型。action应为'set_temperature', 'set_fan_mode', 'state'")
+        return None
+
+# ------------------------ Lock ------------------------
+def control_lock(entity_id, action):
+    if action == "lock":
+        data = {"entity_id": entity_id}
+        return call_service("lock", "lock", data)
+    elif action == "unlock":
+        data = {"entity_id": entity_id}
+        return call_service("lock", "unlock", data)
+    elif action == "state":
+        state = get_state(entity_id)
+        if not state or "attributes" not in state:
+            return "未能获取到门锁的状态信息。"
+        attr = state["attributes"]
+        name = attr.get("friendly_name", entity_id)
+        locked = "锁定" if state.get("state") == "locked" else "未锁定"
+        available = "是" if attr.get("available", True) else "否"
+        msg = f'门锁“{name}”当前状态为：{locked}。'
+        msg += f"\n- 设备可用：{available}"
+        return msg
+    else:
+        print("不支持的操作类型。action应为'lock', 'unlock', 'state'")
+        return None
+
+# ------------------------ Media Player ------------------------
+def control_media_player(entity_id, action):
+    if action == "play":
+        data = {"entity_id": entity_id}
+        return call_service("media_player", "media_play", data)
+    elif action == "pause":
+        data = {"entity_id": entity_id}
+        return call_service("media_player", "media_pause", data)
+    elif action == "stop":
+        data = {"entity_id": entity_id}
+        return call_service("media_player", "media_stop", data)
+    elif action == "state":
+        state = get_state(entity_id)
+        if not state or "attributes" not in state:
+            return "未能获取到媒体播放器的状态信息。"
+        attr = state["attributes"]
+        name = attr.get("friendly_name", entity_id)
+        media_title = attr.get("media_title")
+        volume_level = attr.get("volume_level")
+        is_playing = state.get("state") == "playing"
+        available = "是" if attr.get("available", True) else "否"
+        msg = f'媒体播放器“{name}”当前状态为：{"播放中" if is_playing else "暂停"}。'
+        if media_title:
+            msg += f"\n- 正在播放：{media_title}"
+        if volume_level is not None:
+            msg += f"\n- 音量：{int(volume_level * 100)}%"
+        msg += f"\n- 设备可用：{available}"
+        return msg
+    else:
+        print("不支持的操作类型。action应为'play', 'pause', 'stop', 'state'")
+        return None
+
+# ------------------------ Switch ------------------------
+def control_switch(entity_id, action):
+    if action == "on":
+        data = {"entity_id": entity_id}
+        return call_service("switch", "turn_on", data)
+    elif action == "off":
+        data = {"entity_id": entity_id}
+        return call_service("switch", "turn_off", data)
+    elif action == "state":
+        state = get_state(entity_id)
+        if not state or "attributes" not in state:
+            return "未能获取到开关的状态信息。"
+        attr = state["attributes"]
+        name = attr.get("friendly_name", entity_id)
+        onoff = "开启" if state.get("state") == "on" else "关闭"
+        available = "是" if attr.get("available", True) else "否"
+        msg = f'开关“{name}”当前状态为：{onoff}。'
+        msg += f"\n- 设备可用：{available}"
+        return msg
+    else:
+        print("不支持的操作类型。action应为'on', 'off', 'state'")
+        return None
+    
+
+import time
+# 示例测试
+if __name__ == "__main__":
+    # Light
+    # print(control_light("light.test_lights_kit", "on"))
+    # time.sleep(1)
+    # print(control_light("light.test_lights_kit", "off"))
+    # print(control_light("light.test_lights_bed", "state"))
+    # print(control_light("light.test_lights_bed", "color", rgb_color=[0, 0, 255]))
+
+    # # Curtain
+    # print(control_curtain("cover.test_cover_cover", "open"))
+    # print(control_curtain("cover.livingroom_curtain", "close"))
+    # print(control_curtain("cover.livingroom_curtain", "state"))
+
+    # # Fan
+    # print(control_fan("fan.bedroom_fan", "on"))
+    # print(control_fan("fan.test_fan", "decrease_speed"))
+    # print(control_fan("fan.test_fan", "state"))
+
+    # # Climate
+    # print(control_climate("climate.livingroom_ac", "set_temperature", temperature=22))
+    # print(control_climate("climate.livingroom_ac", "set_fan_mode", fan_mode="high"))
+    # print(control_climate("climate.livingroom_ac", "state"))
+
+    # # Lock
+    # print(control_lock("lock.test_front_door_lock", "lock"))
+    # time.sleep(1)
+    # print(control_lock("lock.test_front_door_lock", "unlock"))
+    # print(control_lock("lock.test_front_door_lock", "state"))
+
+    # # Media Player
+    # print(control_media_player("media_player.livingroom_speaker", "play"))
+    # print(control_media_player("media_player.livingroom_speaker", "pause"))
+    # print(control_media_player("media_player.livingroom_speaker", "state"))
+
+    # # Switch
+    print(control_switch("switch.coffee_machine", "on"))
+    time.sleep(1)
+    print(control_switch("switch.coffee_machine", "off"))
+    print(control_switch("switch.coffee_machine", "state"))
