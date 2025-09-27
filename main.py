@@ -9,7 +9,7 @@ import queue
 import numpy as np
 import sounddevice as sd
 from chat import ChatBot
-from ha_control import control_light, control_curtain
+from ha_control import control_light, control_curtain,control_fan,control_climate,call_service,control_lock,control_media_player,control_switch
 from config import ASR_API_URL, SYSTEM_PROMPT
 
 # 导入KWS和VAD模块
@@ -110,28 +110,123 @@ class HomeAssistantController:
             return None
     
     def execute_command(self, command: dict):
-        """Execute homeassistant command using ha_control"""
+        """Execute homeassistant command using updated ha_control functions"""
         if not command:
             return
-        
+
         service = command.get("service")
-        device = command.get("target_device")
-        
-        if not service or not device:
-            print("Invalid command format")
+        target_device = command.get("target_device")
+        params = command.get("params", {})
+
+        if not service or not target_device:
+            print("[ERROR] Invalid command format: missing service or target_device.")
             return
-        
-        # Map service to control function
-        if service == "light.turn_on":
-            control_light(device, "on")
-        elif service == "light.turn_off":
-            control_light(device, "off")
-        elif service == "cover.open":
-            control_curtain(device, "position", position=100)
-        elif service == "cover.close":
-            control_curtain(device, "position", position=0)
+
+        # 解析服务名中的 domain 和具体服务
+        try:
+            domain, action = service.split('.')
+        except ValueError:
+            print(f"[ERROR] Invalid service format: '{service}'")
+            return
+
+        # 根据 domain 分发到对应的控制函数
+        if domain == "light":
+            if action == "turn_on":
+                brightness = params.get("brightness")
+                color_name = params.get("color_name")
+                rgb_color = params.get("rgb_color")
+                control_light(target_device, "on", brightness=brightness, color_name=color_name, rgb_color=rgb_color)
+            elif action == "turn_off":
+                control_light(target_device, "off")
+            elif action == "set_color":
+                color_name = params.get("color_name")
+                rgb_color = params.get("rgb_color")
+                control_light(target_device, "color", color_name=color_name, rgb_color=rgb_color)
+            elif action == "get_state":
+                result = control_light(target_device, "state")
+                print(result)
+            else:
+                print(f"[ERROR] Unsupported light action: {action}")
+
+        elif domain == "cover":
+            if action == "open_cover":
+                control_curtain(target_device, "open")
+            elif action == "close_cover":
+                control_curtain(target_device, "close")
+            elif action == "set_position":
+                position = params.get("position")
+                control_curtain(target_device, "position", position=position)
+            elif action == "get_state":
+                result = control_curtain(target_device, "state")
+                print(result)
+            else:
+                print(f"[ERROR] Unsupported cover action: {action}")
+
+        elif domain == "fan":
+            if action == "turn_on":
+                control_fan(target_device, "on")
+            elif action == "turn_off":
+                control_fan(target_device, "off")
+            elif action == "increase_speed":
+                control_fan(target_device, "increase_speed")
+            elif action == "decrease_speed":
+                control_fan(target_device, "decrease_speed")
+            elif action == "get_state":
+                result = control_fan(target_device, "state")
+                print(result)
+            else:
+                print(f"[ERROR] Unsupported fan action: {action}")
+
+        elif domain == "climate":
+            if action == "set_temperature":
+                temperature = params.get("temperature")
+                control_climate(target_device, "set_temperature", temperature=temperature)
+            elif action == "set_fan_mode":
+                fan_mode = params.get("fan_mode")
+                control_climate(target_device, "set_fan_mode", fan_mode=fan_mode)
+            elif action == "get_state":
+                result = control_climate(target_device, "state")
+                print(result)
+            else:
+                print(f"[ERROR] Unsupported climate action: {action}")
+
+        elif domain == "lock":
+            if action == "lock":
+                control_lock(target_device, "lock")
+            elif action == "unlock":
+                control_lock(target_device, "unlock")
+            elif action == "get_state":
+                result = control_lock(target_device, "state")
+                print(result)
+            else:
+                print(f"[ERROR] Unsupported lock action: {action}")
+
+        elif domain == "media_player":
+            if action == "media_play":
+                control_media_player(target_device, "play")
+            elif action == "media_pause":
+                control_media_player(target_device, "pause")
+            elif action == "media_stop":
+                control_media_player(target_device, "stop")
+            elif action == "get_state":
+                result = control_media_player(target_device, "state")
+                print(result)
+            else:
+                print(f"[ERROR] Unsupported media player action: {action}")
+
+        elif domain == "switch":
+            if action == "turn_on":
+                control_switch(target_device, "on")
+            elif action == "turn_off":
+                control_switch(target_device, "off")
+            elif action == "get_state":
+                result = control_switch(target_device, "state")
+                print(result)
+            else:
+                print(f"[ERROR] Unsupported switch action: {action}")
+
         else:
-            print(f"Unsupported service: {service}")
+            print(f"[ERROR] Unsupported domain: {domain}")
             
     def recognize_speech(self, filename):
         """Send audio to ASR API and return recognized text"""
@@ -215,7 +310,7 @@ class HomeAssistantController:
                                         command = self.parse_response(content)
                                         if command:
                                             print(f"Executing: {command}")
-                                            # self.execute_command(command)
+                                            self.execute_command(command)
                                 break
                         else:
                             # 检测到说话
