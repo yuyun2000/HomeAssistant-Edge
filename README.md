@@ -51,6 +51,19 @@ flowchart LR
 
 ## 📦 安装部署
 
+📖 **快速启动（推荐）**  
+如果你想快速完成 HA + ASR + GPT 服务的本地部署，请参考本项目的  
+[📄 Quick Config 指南](./doc/quick_config.md)  
+
+该指南包含：
+- 如何启动离线 ASR 服务
+- 如何安装并运行 HA-GPT 模型
+- 如何获取并填写必要的配置（IP、令牌等）
+
+完成快速配置后，你可以继续执行以下步骤完善安装。
+
+---
+
 ### 1️⃣ 克隆仓库
 ```bash
 git clone https://github.com/yuyun2000/HomeAssistant-Edge.git

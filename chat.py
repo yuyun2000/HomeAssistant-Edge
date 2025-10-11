@@ -1,5 +1,5 @@
 '''
-基础模型，使用火山的deepseekv3
+基础模型
 用来判断用户意图，进行工具调用等
 '''
 import os
@@ -87,6 +87,7 @@ class ChatBot:
         Returns:
             完整的API响应
         """
+        self.clear_history()
         # 添加用户消息到历史
         self.conversation_history.append({"role": "user", "content": message})
         
@@ -94,7 +95,9 @@ class ChatBot:
         params = {
             "model": self.model,
             "messages": self.conversation_history,
-            "stream": stream
+            "stream": stream,
+            "temperature": 0.1,  # 越接近0越确定不随机
+            "top_p": 0.9,        # 不限制核采样范围
         }
         
         # 如果有工具定义，添加到请求中
@@ -162,7 +165,7 @@ def main():
     # 初始化聊天机器人，设置系统预设指令
     bot = ChatBot(
         api_key="sk-",
-        base_url="http://192.168.20.124:8000/v1",  # 可以替换为其他兼容OpenAI API的服务地址
+        base_url="http://192.168.20.26:8000/v1",  # 可以替换为其他兼容OpenAI API的服务地址
         model="qwen2.5-HA-0.5B-ctx-ax650",  # 替换为你的推理接入点ID
         system_message=SYSTEM_PROMPT
     )
@@ -207,6 +210,8 @@ def main():
         # user_input += 'no_think'
         response = bot.chat(user_input, stream=False)
         print(response)
+        response = bot.chat("reset", stream=False)
+        
         
 
 if __name__ == "__main__":
