@@ -20,7 +20,7 @@ except ImportError:
 class KeywordSpotter:
     def __init__(
         self,
-        onnx_model="./himfive.onnx",
+        onnx_model="./models/himfive.onnx",
         feat_dim=80,
         sample_rate=16000,
         chunk_size=32,

@@ -43,7 +43,7 @@ nohup uvicorn server:app --host 0.0.0.0 --port 8001 > server.log 2>&1 &
 2. **获取 HA 访问令牌（Long-Lived Access Token）**  
    - 在 Home Assistant 用户配置界面生成令牌，步骤参考下图：
      
-     ![获取访问令牌](./assets/get_ha_token.png)
+     ![获取访问令牌](../assets/get_ha_token.png)
 3. 编辑 `.env` 文件，填入相关参数
 
 ---

@@ -3,7 +3,7 @@ import onnxruntime as ort
 import sounddevice as sd
 
 class SileroVAD:
-    def __init__(self, model_path="silero-vad.onnx", threshold=0.5, buffer_size=3, silence_threshold=0.3):
+    def __init__(self, model_path="./models/silero-vad.onnx", threshold=0.5, buffer_size=3, silence_threshold=0.3):
         self.session = ort.InferenceSession(model_path)
         self.state = np.zeros((2, 1, 128), dtype=np.float32)
         self.sample_rate = 16000
