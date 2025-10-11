@@ -123,7 +123,7 @@ devices:
     name: "Living Room Curtain"
     state: "closed"
 ```
-
+devices的id需要是ha中的分配的id，name则是该设备口语化的名字
 ---
 
 ## 🛠 添加自定义设备
