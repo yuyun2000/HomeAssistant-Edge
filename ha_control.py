@@ -1,4 +1,5 @@
 import requests
+import ast
 from config import HA_BASE_URL, HA_TOKEN
 
 def call_service(domain, service, data):
@@ -45,12 +46,8 @@ def get_state(entity_id):
 def control_light(entity_id, action, **kwargs):
     if action == "on":
         data = {"entity_id": entity_id}
-        if "brightness" in kwargs:
-            data["brightness"] = kwargs["brightness"]
-        if "color_name" in kwargs:
-            data["color_name"] = kwargs["color_name"]
-        if "rgb_color" in kwargs:
-            data["rgb_color"] = kwargs["rgb_color"]
+        if "brightness" in kwargs and  not isinstance(kwargs["brightness"], dict):
+            data["brightness"] = int(kwargs["brightness"]*255) if kwargs["brightness"]<=1 else kwargs["brightness"]
         return call_service("light", "turn_on", data)
     elif action == "off":
         data = {"entity_id": entity_id}
@@ -77,7 +74,8 @@ def control_light(entity_id, action, **kwargs):
         if "color_name" in kwargs:
             data["color_name"] = kwargs["color_name"]
         elif "rgb_color" in kwargs:
-            data["rgb_color"] = kwargs["rgb_color"]
+            rgb_color = ast.literal_eval(kwargs["rgb_color"]) if isinstance(kwargs["rgb_color"], str) else kwargs["rgb_color"]
+            data["rgb_color"] = rgb_color
         else:
             print("请提供color_name或rgb_color参数")
             return None
@@ -274,11 +272,11 @@ import time
 # 示例测试
 if __name__ == "__main__":
     # Light
-    # print(control_light("light.test_lights_kit", "on"))
+    # print(control_light("light.livingroom", "on"))
     # time.sleep(1)
-    # print(control_light("light.test_lights_kit", "off"))
-    # print(control_light("light.test_lights_bed", "state"))
-    # print(control_light("light.test_lights_bed", "color", rgb_color=[0, 0, 255]))
+    # print(control_light("light.livingroom", "off"))
+    print(control_light("light.livingroom", "on",brightness=0.0))
+    # print(control_light("light.livingroom", "color",rgb_color='(255,0,0)'))
 
     # # Curtain
     # print(control_curtain("cover.test_cover_cover", "open"))
@@ -307,7 +305,7 @@ if __name__ == "__main__":
     # print(control_media_player("media_player.livingroom_speaker", "state"))
 
     # # Switch
-    print(control_switch("switch.coffee_machine", "on"))
-    time.sleep(1)
-    print(control_switch("switch.coffee_machine", "off"))
-    print(control_switch("switch.coffee_machine", "state"))
+    # print(control_switch("switch.coffee_machine", "on"))
+    # time.sleep(1)
+    # print(control_switch("switch.coffee_machine", "off"))
+    # print(control_switch("switch.coffee_machine", "state"))

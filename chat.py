@@ -165,7 +165,7 @@ def main():
     # 初始化聊天机器人，设置系统预设指令
     bot = ChatBot(
         api_key="sk-",
-        base_url="http://192.168.20.26:8000/v1",  # 可以替换为其他兼容OpenAI API的服务地址
+        base_url="http://192.168.20.64:8000/v1",  # 可以替换为其他兼容OpenAI API的服务地址
         model="qwen2.5-HA-0.5B-ctx-ax650",  # 替换为你的推理接入点ID
         system_message=SYSTEM_PROMPT
     )

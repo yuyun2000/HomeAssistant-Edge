@@ -45,7 +45,7 @@ class SileroVAD:
 
 # 使用示例
 def run_vad():
-    vad = SileroVAD("silero-vad.onnx")
+    vad = SileroVAD("./models/silero-vad.onnx")
     
     def audio_callback(indata, frames, time, status):
         audio = indata.flatten()

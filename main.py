@@ -91,7 +91,7 @@ class HomeAssistantController:
             self.kws = None
             
         try:
-            self.vad = SileroVAD("silero-vad.onnx", buffer_size=5, silence_threshold=0.3)
+            self.vad = SileroVAD("./models/silero-vad.onnx", buffer_size=5, silence_threshold=0.3)
             print("VAD initialized successfully!")
         except Exception as e:
             print(f"Failed to initialize VAD: {e}")
@@ -116,7 +116,11 @@ class HomeAssistantController:
 
         service = command.get("service")
         target_device = command.get("target_device")
-        params = command.get("params", {})
+        rgb_color = command.get("color", {})
+        brightness = command.get("brightness", {})
+        position = command.get("position")
+        temperature = command.get("temperature")
+        fan_mode = command.get("fan_mode")
 
         if not service or not target_device:
             print("[ERROR] Invalid command format: missing service or target_device.")
@@ -128,20 +132,19 @@ class HomeAssistantController:
         except ValueError:
             print(f"[ERROR] Invalid service format: '{service}'")
             return
-
+        print("***",domain,target_device,action,"***")
         # 根据 domain 分发到对应的控制函数
         if domain == "light":
+            if '(' in rgb_color:
+                action = "set_color"
+                print("turn action to set_color")
             if action == "turn_on":
-                brightness = params.get("brightness")
-                color_name = params.get("color_name")
-                rgb_color = params.get("rgb_color")
-                control_light(target_device, "on", brightness=brightness, color_name=color_name, rgb_color=rgb_color)
+                print(brightness)
+                control_light(target_device, "on", brightness=brightness)
             elif action == "turn_off":
                 control_light(target_device, "off")
             elif action == "set_color":
-                color_name = params.get("color_name")
-                rgb_color = params.get("rgb_color")
-                control_light(target_device, "color", color_name=color_name, rgb_color=rgb_color)
+                control_light(target_device, "color", rgb_color=rgb_color)
             elif action == "get_state":
                 result = control_light(target_device, "state")
                 print(result)
@@ -154,7 +157,6 @@ class HomeAssistantController:
             elif action == "close_cover":
                 control_curtain(target_device, "close")
             elif action == "set_position":
-                position = params.get("position")
                 control_curtain(target_device, "position", position=position)
             elif action == "get_state":
                 result = control_curtain(target_device, "state")
@@ -179,10 +181,10 @@ class HomeAssistantController:
 
         elif domain == "climate":
             if action == "set_temperature":
-                temperature = params.get("temperature")
+                
                 control_climate(target_device, "set_temperature", temperature=temperature)
             elif action == "set_fan_mode":
-                fan_mode = params.get("fan_mode")
+                
                 control_climate(target_device, "set_fan_mode", fan_mode=fan_mode)
             elif action == "get_state":
                 result = control_climate(target_device, "state")
@@ -305,7 +307,7 @@ class HomeAssistantController:
                                         # 处理识别到的文本
                                         content = self.bot.chat(text)
                                         print(f"\nAssistant: {content}")
-                                        
+                                        t = self.bot.chat("reset")
                                         # 解析并执行命令
                                         command = self.parse_response(content)
                                         if command:
