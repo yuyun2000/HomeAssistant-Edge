@@ -248,66 +248,81 @@ class HomeAssistantController:
         if not self.kws or not self.vad:
             print("KWS or VAD not initialized, cannot process voice command")
             return
-            
         print("Listening for wake word...")
-        
         # 音频参数
         sample_rate = 16000
         kws_samples_per_read = int(0.1 * sample_rate)  # 0.1 second = 100 ms
         vad_samples_per_read = 512  # VAD窗口大小
-        
         # 打开音频输入流
         with sd.InputStream(channels=1, dtype="float32", samplerate=sample_rate) as stream:
             while True:
                 # 读取音频数据用于KWS
                 samples, _ = stream.read(kws_samples_per_read)
                 samples = samples.reshape(-1)
-                
                 # 处理音频数据，检测关键词
                 keyword = self.kws.process_audio(samples)
-                
                 # 如果检测到关键词
                 if keyword:
                     print(f"Detected wake word: {keyword}")
                     print("Listening for voice command...")
-                    
+
+                    # === 记录用户说话起始时间 ===
+                    start_speaking_time = time.time()
+
                     # 开始录音
                     self.recorder.start_recording()
-                    
+
                     # 使用VAD检测语音活动
                     silence_count = 0
-                    # 唤醒后等待用户说话的最大静默计数（约10秒）
-                    initial_max_silence_count = 320
-                    # 用户说话过程中的静默计数阈值（约1.6秒）
-                    speaking_max_silence_count = 50
-                    max_silence_count = initial_max_silence_count  # 初始使用较长的静默容忍时间
-                    speaking_detected = False  # 标记是否检测到用户说话
-                    
+                    initial_max_silence_count = 300  # 约10秒
+                    speaking_max_silence_count = 21   # 约0.7s
+
+                    speech_frames = 0 # 说话的语音帧数
+                    max_silence_count = initial_max_silence_count
+
                     # 重置VAD缓冲区
                     if hasattr(self.vad, 'prob_buffer'):
                         self.vad.prob_buffer.clear()
-                    
+
                     while True:
-                        # 读取音频数据用于VAD
                         audio_samples, _ = stream.read(vad_samples_per_read)
                         audio_samples = audio_samples.flatten()
-                        
-                        # 检查是否在说话
                         is_speaking = self.vad(audio_samples)
-                        
+
                         if not is_speaking:
                             silence_count += 1
                             if silence_count > max_silence_count:
                                 # 停止录音
                                 filename = self.recorder.stop_recording()
+
+                                # === 用户说话结束时间 ===
+                                end_speaking_time = time.time()
+                                user_speech_duration = end_speaking_time - start_speaking_time
+                                print(f"[Timing] User speech duration: {user_speech_duration:.2f} seconds")
+
                                 if filename:
+                                    # === ASR识别开始时间 ===
+                                    asr_start_time = time.time()
                                     text = self.recognize_speech(filename)
+                                    # === ASR识别结束时间 ===
+                                    asr_end_time = time.time()
+                                    asr_duration = asr_end_time - asr_start_time
+                                    print(f"[Timing] ASR recognition time: {asr_duration:.2f} seconds")
+
                                     if text:
                                         print(f"\nYou said: {text}")
-                                        # 处理识别到的文本
+
+                                        # === LLM响应开始时间 ===
+                                        llm_start_time = time.time()
                                         content = self.bot.chat(text)
+                                        # === LLM响应结束时间 ===
+                                        llm_end_time = time.time()
+                                        llm_duration = llm_end_time - llm_start_time
+                                        print(f"[Timing] LLM response time: {llm_duration:.2f} seconds")
+
                                         print(f"\nAssistant: {content}")
                                         t = self.bot.chat("reset")
+
                                         # 解析并执行命令
                                         command = self.parse_response(content)
                                         if command:
@@ -315,13 +330,12 @@ class HomeAssistantController:
                                             self.execute_command(command)
                                 break
                         else:
-                            # 检测到说话
-                            silence_count = 0  # 重置静默计数
-                            if not speaking_detected:
-                                # 首次检测到说话，切换到较短的静默容忍时间
-                                speaking_detected = True
+                            silence_count = 0
+                            speech_frames += 1
+                            # 如果说话时长大于1.2秒，认为是正常发言，停顿0.7秒后就进入asr阶段
+                            if speech_frames > 25:
                                 max_silence_count = speaking_max_silence_count
-                    
+
                     # 重置KWS流
                     self.kws.reset()
                     print("Listening for wake word...")
