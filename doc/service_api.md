@@ -805,19 +805,4 @@ class QueuedVoiceClient:
 ### 许可证
 MIT License - 详见 [LICENSE](../LICENSE)
 
----
 
-## 📝 更新日志
-
-### v1.0.0 (2024-11)
-- ✅ 初始版本发布
-- ✅ 支持 TCP Socket 通信
-- ✅ 支持多客户端并发
-- ✅ 完整的 ASR + LLM + HA 控制流程
-- ✅ 提供多语言客户端示例
-
----
-
-**文档版本**: 1.0.0  
-**最后更新**: 2024-11-07  
-**作者**: [yuyun2000](https://github.com/yuyun2000)
