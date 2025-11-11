@@ -1,28 +1,28 @@
 devices:
 - id: light.livingroom
   name: Livingroom
-  state: 'off'
+
 - id: light.bedroom
   name: Bedroom
-  state: 'off'
+
 - id: cover.livingroom_curtain
   name: Livingroom Curtain
-  state: 'off'
+
 - id: fan.bedroom_fan
   name: Bedroom Fan
-  state: 'off'
+
 - id: climate.livingroom_ac
   name: Livingroom Ac
-  state: 'off'
+
 - id: lock.front_door
   name: Front Door
-  state: 'off'
+
 - id: media_player.livingroom_speaker
   name: Livingroom Speaker
-  state: 'off'
+
 - id: switch.coffee_machine
   name: Coffee Machine
-  state: 'off'
+
 services:
 - name: light.turn_on
 - name: light.turn_off
