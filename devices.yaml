@@ -5,20 +5,26 @@ devices:
 - id: light.bedroom
   name: Bedroom
 
+- id: light.bathroom
+  name: Bathroom
+
+- id: light.diningroom
+  name: Diningroom
+
+- id: light.kitchen
+  name: Kitchen
+
 - id: cover.livingroom_curtain
   name: Livingroom Curtain
+
+- id: cover.bedroom_curtain
+  name: Bedroom Curtain
 
 - id: fan.bedroom_fan
   name: Bedroom Fan
 
-- id: climate.livingroom_ac
-  name: Livingroom Ac
-
 - id: lock.front_door
   name: Front Door
-
-- id: media_player.livingroom_speaker
-  name: Livingroom Speaker
 
 - id: switch.coffee_machine
   name: Coffee Machine
@@ -30,15 +36,8 @@ services:
 - name: cover.close_cover
 - name: fan.turn_on
 - name: fan.increase_speed
-- name: climate.set_temperature
-  params:
-  - temperature
-- name: climate.set_fan_mode
-  params:
-  - fan_mode
+- name: fan.decrease_speed
 - name: lock.lock
 - name: lock.unlock
-- name: media_player.media_play
-- name: media_player.media_pause
 - name: switch.turn_on
 - name: switch.turn_off

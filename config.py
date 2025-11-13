@@ -31,7 +31,7 @@ def generate_system_prompt():
     )
 
     devices_str = "\n".join(
-        f"{dev['id']} '{dev['name']}' = {dev['state']}"
+        f"{dev['id']} '{dev['name']}'"
         + (f";{dev['brightness']}%" if 'brightness' in dev else "")
         for dev in DEVICE_CONFIG['devices']
     )
