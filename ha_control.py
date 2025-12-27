@@ -46,8 +46,29 @@ def get_state(entity_id):
 def control_light(entity_id, action, **kwargs):
     if action == "on":
         data = {"entity_id": entity_id}
-        if "brightness" in kwargs and  not isinstance(kwargs["brightness"], dict):
-            data["brightness"] = int(kwargs["brightness"]*255) if kwargs["brightness"]<=1 else kwargs["brightness"]
+        
+        # 处理亮度
+        if "brightness" in kwargs and kwargs["brightness"] is not None:
+            brightness_val = kwargs["brightness"]
+            # 如果是0-1之间的小数，转换为0-255范围
+            if brightness_val <= 1:
+                data["brightness"] = int(brightness_val * 255)
+            else:
+                data["brightness"] = int(brightness_val)
+        
+        # 处理RGB颜色
+        if "rgb_color" in kwargs and kwargs["rgb_color"] is not None:
+            rgb_color = kwargs["rgb_color"]
+            # 如果是字符串，用ast.literal_eval解析
+            if isinstance(rgb_color, str):
+                try:
+                    rgb_color = ast.literal_eval(rgb_color)
+                except (ValueError, SyntaxError):
+                    print(f"[ERROR] Failed to parse rgb_color: {rgb_color}")
+                    return None
+            # 确保rgb_color是列表而不是元组
+            data["rgb_color"] = list(rgb_color) if isinstance(rgb_color, tuple) else rgb_color
+        
         return call_service("light", "turn_on", data)
     elif action == "off":
         data = {"entity_id": entity_id}
@@ -71,11 +92,19 @@ def control_light(entity_id, action, **kwargs):
         return msg
     elif action == "color":
         data = {"entity_id": entity_id}
-        if "color_name" in kwargs:
+        if "color_name" in kwargs and kwargs["color_name"] is not None:
             data["color_name"] = kwargs["color_name"]
-        elif "rgb_color" in kwargs:
-            rgb_color = ast.literal_eval(kwargs["rgb_color"]) if isinstance(kwargs["rgb_color"], str) else kwargs["rgb_color"]
-            data["rgb_color"] = rgb_color
+        elif "rgb_color" in kwargs and kwargs["rgb_color"] is not None:
+            rgb_color = kwargs["rgb_color"]
+            # 如果是字符串，用ast.literal_eval解析
+            if isinstance(rgb_color, str):
+                try:
+                    rgb_color = ast.literal_eval(rgb_color)
+                except (ValueError, SyntaxError):
+                    print(f"[ERROR] Failed to parse rgb_color: {rgb_color}")
+                    return None
+            # 确保rgb_color是列表而不是元组
+            data["rgb_color"] = list(rgb_color) if isinstance(rgb_color, tuple) else rgb_color
         else:
             print("请提供color_name或rgb_color参数")
             return None

@@ -1,43 +1,21 @@
 devices:
-- id: light.livingroom
-  name: Livingroom
+- id: light.master_room
+  name: master room light
 
-- id: light.bedroom
-  name: Bedroom
+- id: light.guest_room
+  name: guest Room light
 
-- id: light.bathroom
-  name: Bathroom
+- id: fan.fan
+  name: Fan or Fine
 
-- id: light.diningroom
-  name: Diningroom
 
-- id: light.kitchen
-  name: Kitchen
-
-- id: cover.livingroom_curtain
-  name: Livingroom Curtain
-
-- id: cover.bedroom_curtain
-  name: Bedroom Curtain
-
-- id: fan.bedroom_fan
-  name: Bedroom Fan
-
-- id: lock.front_door
-  name: Front Door
-
-- id: switch.coffee_machine
-  name: Coffee Machine
+- id: switch.heater
+  name: Heater
 
 services:
-- name: light.turn_on
+- name: light.turn_on(rgb_color,brightness)
 - name: light.turn_off
-- name: cover.open_cover
-- name: cover.close_cover
 - name: fan.turn_on
-- name: fan.increase_speed
-- name: fan.decrease_speed
-- name: lock.lock
-- name: lock.unlock
+- name: fan.turn_off
 - name: switch.turn_on
 - name: switch.turn_off

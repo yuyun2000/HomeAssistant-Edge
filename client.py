@@ -82,6 +82,7 @@ class SmartVoiceClient:
             }
             
             if msg_type == 'VOICE_COMMAND' and audio_data:
+                print("send size-------------------------------------",len(audio_data))
                 header['size'] = len(audio_data)
                 header['sample_rate'] = self.sample_rate
                 header['channels'] = self.channels

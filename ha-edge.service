@@ -1,0 +1,12 @@
+[Unit]
+Description=HA EDGE Launch Service
+After=network-online.target 
+
+[Service]
+User=root
+ExecStart=/usr/bin/python3 /root/ha-server/ha-edge/server.py
+WorkingDirectory=/root/ha-server/ha-edge/
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

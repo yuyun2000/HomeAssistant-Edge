@@ -7,6 +7,10 @@ import uuid
 from main import HomeAssistantController
 from config import LLM_API_KEY, LLM_BASE_URL, LLM_MODEL
 
+import string
+def normalize(s: str) -> str:
+    trans = str.maketrans({p: " " for p in r"""!"#$%&()*+,-./:;<=>?@[\]^_`{|}~"""})
+    return " ".join(s.lower().translate(trans).split())
 class LightweightVoiceServer:
     """轻量级语音控制服务器 - 只处理语音命令，不处理唤醒"""
     
@@ -40,8 +44,8 @@ class LightweightVoiceServer:
         self.server_socket.bind((self.host, self.port))
         self.server_socket.listen(10)
         
-        print(f"🎤 Lightweight Voice Server started on {self.host}:{self.port}")
-        print(f"📡 Waiting for clients...")
+        print(f" Lightweight Voice Server started on {self.host}:{self.port}")
+        print(f" Waiting for clients...")
         
         try:
             while True:
@@ -64,7 +68,7 @@ class LightweightVoiceServer:
                 }
                 
         except KeyboardInterrupt:
-            print("\n🛑 Server shutting down...")
+            print("\n Server shutting down...")
         finally:
             if self.server_socket:
                 self.server_socket.close()
@@ -103,7 +107,7 @@ class LightweightVoiceServer:
                     audio_size = header.get('size', 0)
                     duration = header.get('duration', 0)
                     
-                    print(f"[{client_id}] 📥 Receiving audio: {audio_size} bytes, {duration:.2f}s")
+                    print(f"[{client_id}]  Receiving audio: {audio_size} bytes, {duration:.2f}s")
                     
                     # 接收音频数据
                     audio_data = b''
@@ -115,11 +119,11 @@ class LightweightVoiceServer:
                         audio_data += chunk
                     
                     if len(audio_data) != audio_size:
-                        print(f"[{client_id}] ⚠️ Incomplete audio: {len(audio_data)}/{audio_size}")
+                        print(f"[{client_id}]  Incomplete audio: {len(audio_data)}/{audio_size}")
                         self.send_response(client_socket, 'ERROR', 'Incomplete audio data', request_id)
                         continue
                     
-                    print(f"[{client_id}] ✅ Audio received completely")
+                    print(f"[{client_id}]  Audio received completely")
                     
                     # 立即发送ACK确认收到
                     self.send_response(client_socket, 'ACK', 'Audio received, processing...', request_id)
@@ -131,12 +135,12 @@ class LightweightVoiceServer:
                     self.send_response(client_socket, 'PONG', 'Server is alive', request_id)
                 
                 else:
-                    print(f"[{client_id}] ⚠️ Unknown message type: {msg_type}")
+                    print(f"[{client_id}]  Unknown message type: {msg_type}")
         
         except ConnectionResetError:
             print(f"[{client_id}] Connection reset by client")
         except Exception as e:
-            print(f"[{client_id}] ❌ Error: {e}")
+            print(f"[{client_id}]  Error: {e}")
             import traceback
             traceback.print_exc()
         finally:
@@ -145,7 +149,7 @@ class LightweightVoiceServer:
                 del self.active_clients[client_id]
             if client_id in self.client_controllers:
                 del self.client_controllers[client_id]
-            print(f"[{client_id}] 👋 Client disconnected")
+            print(f"[{client_id}]  Client disconnected")
     
     def process_voice_command(self, client_socket, client_id, audio_data, header, request_id):
         """处理语音命令：ASR + LLM + 执行"""
@@ -166,17 +170,18 @@ class LightweightVoiceServer:
                 wf.writeframes(audio_data)
             
             # 1. ASR识别
-            print(f"[{client_id}][{request_id[:8]}] 🔄 Running ASR...")
+            print(f"[{client_id}][{request_id[:8]}]  Running ASR...")
             asr_start = time.time()
             text = controller.recognize_speech(filename)
+            text = normalize(text)
             asr_time = time.time() - asr_start
             
             if not text or not text.strip():
-                print(f"[{client_id}][{request_id[:8]}] ⚠️ ASR failed or empty")
+                print(f"[{client_id}][{request_id[:8]}]  ASR failed or empty")
                 self.send_response(client_socket, 'ERROR', 'ASR recognition failed or empty result', request_id)
                 return
             
-            print(f"[{client_id}][{request_id[:8]}] 📝 ASR Result: '{text}' ({asr_time:.2f}s)")
+            print(f"[{client_id}][{request_id[:8]}]  ASR Result: '{text}' ({asr_time:.2f}s)")
             
             # 立即发送ASR结果
             self.send_response(client_socket, 'ASR_RESULT', {
@@ -185,7 +190,7 @@ class LightweightVoiceServer:
             }, request_id)
             
             # 2. LLM处理
-            print(f"[{client_id}][{request_id[:8]}] 🤖 Processing with LLM...")
+            print(f"[{client_id}][{request_id[:8]}]  Processing with LLM...")
             llm_start = time.time()
             
             # 确保使用UTF-8编码传递中文
@@ -193,7 +198,7 @@ class LightweightVoiceServer:
             
             llm_time = time.time() - llm_start
             
-            print(f"[{client_id}][{request_id[:8]}] 💬 LLM Response ({llm_time:.2f}s):")
+            print(f"[{client_id}][{request_id[:8]}]  LLM Response ({llm_time:.2f}s):")
             print(f"   {content[:200]}...")  # 打印前200字符
             
             # 重置对话上下文
@@ -203,12 +208,12 @@ class LightweightVoiceServer:
             command = controller.parse_response(content)
             
             if command:
-                print(f"[{client_id}][{request_id[:8]}] ⚡ Executing: {command}")
+                print(f"[{client_id}][{request_id[:8]}]  Executing: {command}")
                 try:
                     controller.execute_commands(command)
                     execution_status = "success"
                 except Exception as e:
-                    print(f"[{client_id}][{request_id[:8]}] ⚠️ Execution error: {e}")
+                    print(f"[{client_id}][{request_id[:8]}]  Execution error: {e}")
                     execution_status = f"error: {str(e)}"
                 
                 self.send_response(client_socket, 'SUCCESS', {
@@ -221,7 +226,7 @@ class LightweightVoiceServer:
                     'total_time': round(asr_time + llm_time, 2)
                 }, request_id)
             else:
-                print(f"[{client_id}][{request_id[:8]}] ℹ️ No executable command")
+                print(f"[{client_id}][{request_id[:8]}] ℹ No executable command")
                 self.send_response(client_socket, 'INFO', {
                     'text': text,
                     'response': content,
@@ -231,7 +236,7 @@ class LightweightVoiceServer:
                 }, request_id)
         
         except Exception as e:
-            print(f"[{client_id}][{request_id[:8]}] ❌ Processing error: {e}")
+            print(f"[{client_id}][{request_id[:8]}]  Processing error: {e}")
             import traceback
             traceback.print_exc()
             self.send_response(client_socket, 'ERROR', str(e), request_id)
@@ -251,9 +256,9 @@ class LightweightVoiceServer:
             size = len(response_json).to_bytes(4, 'big')
             client_socket.sendall(size + response_json)
             
-            print(f"   📤 Sent {msg_type} response (ID: {request_id[:8] if request_id else 'N/A'})")
+            print(f"    Sent {msg_type} response (ID: {request_id[:8] if request_id else 'N/A'})")
         except Exception as e:
-            print(f"   ❌ Error sending response: {e}")
+            print(f"    Error sending response: {e}")
 
 if __name__ == "__main__":
     server = LightweightVoiceServer(host='0.0.0.0', port=9999)

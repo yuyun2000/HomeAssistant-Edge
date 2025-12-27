@@ -97,7 +97,7 @@ class ChatBot:
             "messages": self.conversation_history,
             "stream": stream,
             "temperature": 0.1,  # 越接近0越确定不随机
-            "top_p": 0.1,        # 不限制核采样范围
+            "top_p": 0.9,        # 不限制核采样范围
         }
         
         # 如果有工具定义，添加到请求中
@@ -165,8 +165,8 @@ def main():
     # 初始化聊天机器人，设置系统预设指令
     bot = ChatBot(
         api_key="sk-",
-        base_url="http://192.168.3.3:8000/v1",  # 可以替换为其他兼容OpenAI API的服务地址
-        model="qwen2.5-HA-0.5B-ctx-ax650",  # 替换为你的推理接入点ID
+        base_url="http://192.168.20.67:8000/v1",  # 可以替换为其他兼容OpenAI API的服务地址
+        model="qwen2.5-HA-0.5B-ctx-axcl",  # 替换为你的推理接入点ID
         system_message=SYSTEM_PROMPT
     )
     

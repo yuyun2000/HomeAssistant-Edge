@@ -12,8 +12,11 @@ from chat import ChatBot
 from ha_control import control_light, control_curtain,control_fan,control_climate,call_service,control_lock,control_media_player,control_switch
 from config import ASR_API_URL, SYSTEM_PROMPT
 # 导入KWS和VAD模块
-from kws import KeywordSpotter
-from vad import SileroVAD
+try:
+    from kws import KeywordSpotter
+    from vad import SileroVAD
+except:
+    pass
 
 class AudioRecorder:
     def __init__(self):
@@ -138,8 +141,8 @@ class HomeAssistantController:
             
         service = command.get("service")
         target_device = command.get("target_device")
-        rgb_color = command.get("color", {})
-        brightness = command.get("brightness", {})
+        rgb_color = command.get("rgb_color")  # 修复：应该是 rgb_color 而不是 color
+        brightness = command.get("brightness")  # 修复：默认值应该是 None
         position = command.get("position")
         temperature = command.get("temperature")
         fan_mode = command.get("fan_mode")
@@ -159,12 +162,14 @@ class HomeAssistantController:
         
         # 根据 domain 分发到对应的控制函数
         if domain == "light":
-            if '(' in str(rgb_color):
-                action = "set_color"
-                print("turn action to set_color")
+            # 如果有rgb_color，优先使用set_color行为
+            # if rgb_color is not None:
+                # action = "set_color"
+                # print(f"[EXEC] Detected rgb_color, switching to set_color action")
+            
             if action == "turn_on":
-                print(brightness)
-                control_light(target_device, "on", brightness=brightness)
+                print(f"[EXEC] Brightness: {brightness}")
+                control_light(target_device, "on", brightness=brightness, rgb_color=rgb_color if rgb_color else None)
             elif action == "turn_off":
                 control_light(target_device, "off")
             elif action == "set_color":
