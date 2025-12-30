@@ -72,26 +72,28 @@ class LightweightVoiceServer:
         finally:
             if self.server_socket:
                 self.server_socket.close()
+
+    def recv_exact(self, sock, count):
+        buf = b''
+        while len(buf) < count:
+            newbuf = sock.recv(count - len(buf))
+            if not newbuf: return None
+            buf += newbuf
+        return buf
     
     def handle_client(self, client_socket, address, client_id):
         """处理客户端请求"""
         try:
             while True:
-                # 1. 接收消息头
-                header_size = client_socket.recv(4)
-                if not header_size or len(header_size) < 4:
-                    break
+                # 1. 接收消息头长度 (4字节)
+                header_size_bytes = self.recv_exact(client_socket, 4)
+                if not header_size_bytes: break
                 
-                header_length = int.from_bytes(header_size, 'big')
-                header_data = b''
-                while len(header_data) < header_length:
-                    chunk = client_socket.recv(header_length - len(header_data))
-                    if not chunk:
-                        break
-                    header_data += chunk
+                header_length = int.from_bytes(header_size_bytes, 'big')
                 
-                if len(header_data) < header_length:
-                    break
+                # 2. 接收消息头 JSON
+                header_data = self.recv_exact(client_socket, header_length)
+                if not header_data: break
                 
                 header = json.loads(header_data.decode('utf-8'))
                 msg_type = header.get('type')
@@ -103,33 +105,60 @@ class LightweightVoiceServer:
                     self.send_response(client_socket, 'PONG', 'alive', request_id)
                     
                 elif msg_type == 'VOICE_COMMAND':
-                    # 接收语音命令
-                    audio_size = header.get('size', 0)
-                    duration = header.get('duration', 0)
+                    # === 核心修改部分开始 ===
+                    audio_size = header.get('size', 0) # 如果是 0 或 -1，代表流式传输
                     
-                    print(f"[{client_id}]  Receiving audio: {audio_size} bytes, {duration:.2f}s")
+                    audio_data = bytearray()
                     
-                    # 接收音频数据
-                    audio_data = b''
-                    while len(audio_data) < audio_size:
-                        chunk_size = min(8192, audio_size - len(audio_data))
-                        chunk = client_socket.recv(chunk_size)
-                        if not chunk:
+                    if audio_size > 0:
+                        # --- 兼容旧模式：一次性接收固定长度 ---
+                        print(f"[{client_id}] Receiving fixed audio: {audio_size} bytes")
+                        data = self.recv_exact(client_socket, audio_size)
+                        if not data:
+                            print(f"[{client_id}] Connection lost during audio recv")
                             break
-                        audio_data += chunk
+                        audio_data.extend(data)
+                    else:
+                        # --- 新模式：流式接收 (Chunked) ---
+                        # C++ 客户端逻辑：循环发送 [4字节长度][数据]，最后发送 [0000] 结束
+                        print(f"[{client_id}] Receiving streamed audio...")
+                        chunk_count = 0
+                        while True:
+                            # 1. 读分片长度
+                            chunk_len_bytes = self.recv_exact(client_socket, 4)
+                            if not chunk_len_bytes: break
+                            
+                            chunk_len = int.from_bytes(chunk_len_bytes, 'big')
+                            
+                            # 2. 如果长度为0，表示传输结束
+                            if chunk_len == 0:
+                                print(f"[{client_id}] End of stream signal received.")
+                                break
+                                
+                            # 3. 读分片数据
+                            chunk = self.recv_exact(client_socket, chunk_len)
+                            if not chunk: break
+                            
+                            audio_data.extend(chunk)
+                            chunk_count += 1
+                            # 可选：打印一下进度，防止看起来像卡死
+                            if chunk_count % 10 == 0:
+                                print(f"[{client_id}] .. received {chunk_count} chunks, total {len(audio_data)} bytes")
+
+                    # === 核心修改部分结束 ===
                     
-                    if len(audio_data) != audio_size:
-                        print(f"[{client_id}]  Incomplete audio: {len(audio_data)}/{audio_size}")
-                        self.send_response(client_socket, 'ERROR', 'Incomplete audio data', request_id)
-                        continue
+                    final_size = len(audio_data)
+                    print(f"[{client_id}] Audio received completely. Total: {final_size} bytes")
                     
-                    print(f"[{client_id}]  Audio received completely")
+                    if final_size == 0:
+                         self.send_response(client_socket, 'ERROR', 'Empty audio', request_id)
+                         continue
+
+                    # 立即发送ACK
+                    self.send_response(client_socket, 'ACK', 'Audio received', request_id)
                     
-                    # 立即发送ACK确认收到
-                    self.send_response(client_socket, 'ACK', 'Audio received, processing...', request_id)
-                    
-                    # 处理语音命令
-                    self.process_voice_command(client_socket, client_id, audio_data, header, request_id)
+                    # 转回 bytes 类型供后续处理
+                    self.process_voice_command(client_socket, client_id, bytes(audio_data), header, request_id)
                 
                 elif msg_type == 'PING':
                     self.send_response(client_socket, 'PONG', 'Server is alive', request_id)
